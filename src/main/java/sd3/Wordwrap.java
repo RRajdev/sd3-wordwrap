@@ -1,52 +1,88 @@
 package sd3;
 
 public class Wordwrap {
+    private String input;
+    private int lengthOfWrappedLine;
+    private String delimiter = " ";
+    private int beginningOfLineIndex;
+    private int endOfLineIndex;
+    private String nextLine = "";
+    private String wrappedText = "";
 
-    public static String wrap(String input, int lineLength){
-        final String EMPTY_STRING = "";
-        String delimiter = " ";
-        int lengthOfWrappedLine = 0;
-        int begIndex = 0;
-        int endIndex = lineLength;
-        StringBuilder wrappedText = new StringBuilder();
 
-        if (input == null || input.isEmpty()) return EMPTY_STRING;
-
-        while(endIndex <= input.length()) {
-
-            String newLine = input.substring(begIndex, endIndex);
-            if (newLine.startsWith(delimiter)){
-                begIndex ++;
-                endIndex = Math.min(endIndex + 1, input.length());
-                newLine = input.substring(begIndex, endIndex);
-            }
-
-            if (endIndex != input.length()) {
-                if (newLine.contains(delimiter)) {
-                    lengthOfWrappedLine = newLine.lastIndexOf(delimiter);
-                    wrappedText = addLine(wrappedText, newLine.substring(0, lengthOfWrappedLine).trim());
-
-                    begIndex += lengthOfWrappedLine;
-                    endIndex = Math.min(endIndex + lengthOfWrappedLine, input.length());
-                }
-                else {
-                    wrappedText = addLine(wrappedText, newLine);
-                    begIndex += lineLength;
-                    endIndex = Math.min(endIndex + lineLength, input.length());
-                }
-            }
-            else {
-                wrappedText = addLine(wrappedText, newLine.trim());
-                endIndex++;
-            }
-
-        }
-        return wrappedText.toString().trim();
+    public Wordwrap(String input, int lengthOfWrappedLine) {
+        this.input = input;
+        this.lengthOfWrappedLine = lengthOfWrappedLine;
+        this.endOfLineIndex = lengthOfWrappedLine;
+        this.beginningOfLineIndex = 0;
     }
 
-    private static StringBuilder addLine(StringBuilder wrappedText, String newLine){
-         wrappedText.append(newLine);
-         wrappedText.append(System.lineSeparator());
-         return wrappedText;
+    public  String wrap(){
+        final String EMPTY_STRING = "";
+        if (input == null || input.isEmpty()) return EMPTY_STRING;
+
+        if (lengthOfWrappedLine <= 0 ) {
+            throw new IllegalArgumentException("Please specify a line length that is longer than 0 chars");
+        }
+
+        while(hasUnparsedContent()) {
+            ignoreLeadingSpace();
+            nextLine = parseNextLine();
+            if (isEndOfText()) {
+                writeLine();
+                break;
+            }
+            wrapNextLine();
+        }
+
+        return wrappedText.trim();
+    }
+
+    private void wrapNextLine() {
+        if (hasSplitWord())
+            writeLineAddingSeparatorBeforeSplitWord();
+        else
+            writeLine();
+    }
+
+    private boolean hasUnparsedContent() {
+        return endOfLineIndex <= input.length();
+    }
+
+    private void ignoreLeadingSpace() {
+        if (parseNextLine().startsWith(delimiter))
+            resetPosition(1);
+    }
+
+    private String parseNextLine() {
+        return input.substring(beginningOfLineIndex, endOfLineIndex);
+    }
+
+    private boolean isEndOfText() {
+        return endOfLineIndex == input.length();
+    }
+
+    private boolean hasSplitWord() {
+        return nextLine.contains(delimiter);
+    }
+
+    private void writeLineAddingSeparatorBeforeSplitWord() {
+        int lengthOfWrappedLineToDelimiter = nextLine.lastIndexOf(delimiter);
+        writeLineToBuffer(nextLine.substring(0, lengthOfWrappedLineToDelimiter).trim());
+        resetPosition(lengthOfWrappedLineToDelimiter);
+    }
+
+    private void writeLine() {
+        writeLineToBuffer(nextLine.trim());
+        resetPosition(lengthOfWrappedLine);
+    }
+
+    private void resetPosition(int length) {
+        beginningOfLineIndex += length;
+        endOfLineIndex = Math.min(endOfLineIndex + length, input.length());
+    }
+
+    private  void writeLineToBuffer(String newLine){
+        wrappedText += newLine + System.lineSeparator();
     }
 }

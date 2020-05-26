@@ -1,2 +1,16 @@
 # Project exclude paths
 /.gradle/
+
+/build/
+
+#ignore gradle GUI config
+gradle-app.setting
+
+#intellij settings
+/.idea/
+*.ipr
+*.iml
+.idea_modules/
+.idea_modules
+
+*.xml
